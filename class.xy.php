@@ -7,28 +7,10 @@ class XY {
     function __construct($x = 0, $y = 0) {
         $this->x = $x;
         $this->y = $y;
-
-        $this->temp = new Proj4php();
-    }
-
-    function transform() {
-        $this->temp->transform(
-            Proj4php::$WGS84,
-            new Proj4phpProj('GOOGLE'),
-            $this
-        );
-    }
-
-    function scale_X_to($width) {
-        
-    }
-
-    function scale_Y_to($height) {
-
     }
 
     function __toString() {
-        return( sprintf( "%.1f, %.1f", $this->x, $this->y) );
+        return( sprintf( "%.1f,%.1f", $this->x, $this->y) );
     }
 }
 
@@ -44,6 +26,9 @@ class XY_ranger {
     }
 
     function reset() {
+        unset( $this->x );
+        unset( $this->y );
+
         $this->x = array();
         $this->y = array();
 
@@ -88,7 +73,7 @@ class XY_points {
     public $temp;
 
     function __construct() {
-
+        $this->temp = new Proj4php();
     }
 
     function zeroPoints($range) {
@@ -98,18 +83,34 @@ class XY_points {
         }
     }
 
-    function scaleTo( $range, $width, $height ) {
+    function scaleTo( $sx, $sy) {
         foreach( $this->points as $k => $point ) {
-            $this->points[$k]->x = ($point->y * $width) / $height;
-            $this->points[$k]->y = ($point->x * $height) / $width;
+            $this->points[$k]->x = $point->x * $sx;
+            $this->points[$k]->y = $point->y * $sy;
         }
+    }
+
+    function transform(&$point) {
+        $this->temp->transform(
+            Proj4php::$WGS84,
+            new Proj4phpProj('GOOGLE'),
+            $point
+        );
     }
 
     function loadPoints($points) {
         foreach( $points as $point ) {
             $xy = new XY($point[0], $point[1]);
-            $xy->transform();
+            $this->transform($xy);
             $this->points[] = $xy;
         }
+    }
+
+    function simpleCoordinates($height) {
+        $r = array();
+        foreach( $this->points as $point ) {
+            $r[] = sprintf("%0.1f,%0.1f", $point->x, $height - $point->y);
+        }
+        return( $r );
     }
 }
