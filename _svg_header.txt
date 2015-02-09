@@ -48,7 +48,3 @@ rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
 </cc:Work>
 </rdf:RDF>
 </metadata>
-<g
-inkscape:label="Layer 1"
-inkscape:groupmode="layer"
-id="layer1">
