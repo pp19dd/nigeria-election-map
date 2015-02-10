@@ -30,7 +30,8 @@ $files = glob("states/*.dat");
 .error, .error a, .ok { background-color: crimson; color: white; padding:4px }
 .ok { background-color: limegreen; color: white; }
 .nw { white-space: nowrap }
-.sp { width: 80px !important; }
+.sp { width: 150px !important; }
+td.act { width: 150px !important; }
 div.number {
     background-color: limegreen;
     color: white;
@@ -47,6 +48,7 @@ table { width: 100% }
 <p><div class="number">1</div> <a href="1_kml_to_states.php">Regenerate Files from KML</a></p>
 <p><div class="number">4</div> <a href="4_grand_range.php">Compute grand Range from *.range</a></p>
 <p><div class="number">8</div> <a href="8_generate_combined_svg.php">Generate combined SVG file</a></p>
+<p><div class="number">9</div> <a href="9_view_svg.php?file=states/_combined_opt1.svg">View SVG as RaphaelJS</a></p>
 
 <table>
     <tr>
@@ -58,18 +60,19 @@ table { width: 100% }
         <th class="nw sp"><div class="number">5</div>Zero</th>
         <th class="nw sp"><div class="number">6</div>Scale</th>
         <th class="nw sp"><div class="number">7</div>SVG</th>
-        <th style="width:50%">Status</th>
+        <th style="width:40%">Status</th>
     </tr>
 <?php foreach( $files as $k => $file ) { ?>
     <tr>
         <td><?php echo $file ?></td>
         <td class='c2'><?php echo number_format(filesize($file)); ?></td>
         <td class='c3'><?php stats($file, $k) ?></td>
-        <td class='c4'><?php action($file, ".geo", $k, "2_geocode.php") ?></td>
-        <td class='c5'><?php action($file, ".range", $k, "3_range.php") ?></td>
-        <td class='c6'><?php action($file, ".zero", $k, "5_zero.php") ?></td>
-        <td class='c7'><?php action($file, ".scale", $k, "6_scale.php") ?></td>
-        <td class='c7'><?php action($file, ".svg", $k, "7_svg.php") ?></td>
+        <td class='c4 act'><?php action($file, ".geo", $k, "2_geocode.php") ?></td>
+        <td class='c5 act'><?php action($file, ".range", $k, "3_range.php") ?></td>
+        <td class='c6 act'><?php action($file, ".zero", $k, "5_zero.php") ?></td>
+        <td class='c7 act'><?php action($file, ".scale", $k, "6_scale.php") ?></td>
+        <td class='c8 act'><?php action($file, ".svg", $k, "7_svg.php") ?></td>
+        <td class='c9 act'><a href="9_view_svg.php?file=<?php echo $file ?>.svg">View</a></td>
         <td class='f'><iframe name="target_<?php echo $k ?>"></iframe></td>
     </tr>
 <?php } ?>
