@@ -1,13 +1,7 @@
 <?php
 
 require( "functions_svg.php");
-?>
 
-<style>
-body, html { margin:0; padding:0 }
-</style>
-
-<?php
 /*
 $range_file = "states/_grand_range.txt";
 if( !file_exists($range_file) ) die( "error: {$range_file} is missing");
@@ -30,11 +24,21 @@ $SVG = file_get_contents( "_svg_header.txt");
 $SVG .= "<!-- COMPOSE BEGIN -->\n";
 $SVG .= "<g id=\"{$basename}\">\n";
 
+$paths = array();
+
+$count_group = 0;
+
 foreach( $data["coordinates"] as $k1 => $polygons ) {
-    $SVG .= "\t<g>\n";
-    $SVG .= "\t\t<path d=\"" . polygon_to_path($polygons) . "\"/>\n";
-    $SVG .= "\t</g>\n";
+    $count_group++;
+    #$SVG .= "\t<g>\n";
+    #$SVG .= "\t\t<path d=\"" . polygon_to_path($polygons) . "\"/>\n";
+    #$SVG .= "\t</g>\n";
+    $paths[] = polygon_to_path($polygons);
 }
+
+$SVG .= "\t\t<path d=\"";
+$SVG .= implode(" ", $paths);
+$SVG .= "\"/>\n";
 
 $SVG .= "</g>\n<!-- COMPOSE END -->\n";
 $SVG .= "</svg>";
@@ -42,4 +46,5 @@ $SVG .= "</svg>";
 $out = $_GET['file'] . ".svg";
 file_put_contents( $out, $SVG );
 
-echo number_format(filesize($out)) . " bytes";
+echo "[G:{$count_group}] ";
+echo "SVG: " . number_format(filesize($out)) . " bytes";

@@ -43,28 +43,30 @@ class SVG {
 
     function getPath($node) {
         $r = array();
-        $paths = $this->xpath->query("svg:g/svg:path", $node);
+        # $paths = $this->xpath->query("svg:g/svg:path", $node);
+        $paths = $this->xpath->query("svg:path|svg:g/svg:path", $node);
         #echo "@" .$paths->length . "@ ";
         foreach( $paths as $path ) {
             $id = $path->getAttribute("id");
             #$r[$id] = $path->getAttribute("d");
             $r[] = $path->getAttribute("d");
         }
-        return( $r );
+        return( implode(" ", $r ) );
     }
 
     function info() {
         $r = array();
 
         $states = $this->xpath->query( "svg:g/svg:g" );
+
         foreach( $states as $state ) {
 
             $id = $state->getAttribute("id");
             $r[$id] = $this->getPath($state);
 
-            
-        }
 
+        }
+#echo "<PRE>"; print_r( $r) ; die;
         return( $r );
     }
 }

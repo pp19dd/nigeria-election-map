@@ -21,7 +21,7 @@ $data = unserialize(file_get_contents($file));
 // ===========================================================================
 
 $width = 640;
-$height = 480;
+$height = 520;
 $ratio = $range["x"]["max"] / $range["y"]["max"];
 
 $sx = $width / $range["x"]["max"];

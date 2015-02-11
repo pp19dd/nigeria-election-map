@@ -7,25 +7,38 @@ function stats($file) {
 
 function action($file, $ext, $id, $href) {
     $f = $file . $ext;
+    $class = "error"; $label = "Missing";
     if( file_exists($f) ) {
-        echo "<div class='ok'>ok</div>";
-    } else {
-?>
-<div class='error'>
-    <a
-        target='target_<?php echo $id ?>'
-        href='<?php echo $href ?>?file=<?php echo $file ?>'
-    >
-        Missing
-    </a>
-</div>
-<?php
+        $class = "ok";
+        $label = "ok";
     }
+
+?>
+<div class='button <?php echo $class ?>'
+    onclick='action(this, "status_<?php echo $id ?>", "<?php echo $href ?>?file=<?php echo $file ?>");'
+><?php echo $label ?></div>
+<?php
 }
 
 $files = glob("states/*.dat");
 ?>
+<script src="jquery.min.js"></script>
+<script>
+function action(that, id, href) {
+    $(that).fadeOut();
+
+    $.ajax({
+        url: href,
+        dataType: "html",
+        success: function(data) {
+            $("#" + id).html( data );
+            $(that).fadeIn();
+        }
+    });
+}
+</script>
 <style>
+.button { cursor: pointer }
 .c2, .c3 { text-align: right }
 .error, .error a, .ok { background-color: crimson; color: white; padding:4px }
 .ok { background-color: limegreen; color: white; }
@@ -48,7 +61,7 @@ table { width: 100% }
 <p><div class="number">1</div> <a href="1_kml_to_states.php">Regenerate Files from KML</a></p>
 <p><div class="number">4</div> <a href="4_grand_range.php">Compute grand Range from *.range</a></p>
 <p><div class="number">8</div> <a href="8_generate_combined_svg.php">Generate combined SVG file</a></p>
-<p><div class="number">9</div> <a href="9_view_svg.php?file=states/_combined_opt1.svg">View SVG as RaphaelJS</a></p>
+<p><div class="number">9</div> <a href="9_view_svg.php">View SVG as RaphaelJS</a></p>
 
 <table>
     <tr>
@@ -60,6 +73,7 @@ table { width: 100% }
         <th class="nw sp"><div class="number">5</div>Zero</th>
         <th class="nw sp"><div class="number">6</div>Scale</th>
         <th class="nw sp"><div class="number">7</div>SVG</th>
+        <th class="nw sp"></th>
         <th style="width:40%">Status</th>
     </tr>
 <?php foreach( $files as $k => $file ) { ?>
@@ -73,7 +87,7 @@ table { width: 100% }
         <td class='c7 act'><?php action($file, ".scale", $k, "6_scale.php") ?></td>
         <td class='c8 act'><?php action($file, ".svg", $k, "7_svg.php") ?></td>
         <td class='c9 act'><a href="9_view_svg.php?file=<?php echo $file ?>.svg">View</a></td>
-        <td class='f'><iframe name="target_<?php echo $k ?>"></iframe></td>
+        <td class='f'><div id="status_<?php echo $k ?>"></div></td>
     </tr>
 <?php } ?>
 </table>

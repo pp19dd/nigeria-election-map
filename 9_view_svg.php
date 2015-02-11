@@ -31,32 +31,36 @@ $svg = $svg_file->info();
 var map_data = <?php echo json_encode($svg); ?>;
 var paper;
 var map = { };
+
 var styles = {
-    poly: { fill: 'silver', 'stroke-width': 0.5, stroke: 'black' }
+    poly: { fill: 'gray', 'stroke-width': 0.5, stroke: 'black' },
+    over: { fill: 'black' },
+    status: { "font-size": 14, "text-anchor": "start" }
 }
 
 Raphael(function() {
-    paper = Raphael("map", 800, 600);
-    for( var k in map_data )(function(state, paths) {
-        // console.info( state, " = ", paths.length );
-        var group = paper.set();
+    paper = Raphael("map", 640, 520);
+    var status = paper.text(10,10,"status");
+    status.attr( styles.status );
 
-        for( var path in paths ) {
-            group.push( paper.path( paths[path] ).attr(styles.poly) );
-        }
+    for( var k in map_data )(function(state, path_string) {
+        map[state] = paper.path(path_string);
+        map[state].attr(styles.poly);
+        map[state].__fill = map[state].attr("fill");
 
-        group.mouseover(function() {
-            this.stop().animate({ fill: 'red' }, 300, "<>");
+        map[state].mouseover(function() {
+            this.stop().animate(styles.over, 300, "<>");
+            status.attr("text", state);
+            status.show();
         }).mouseout(function() {
-            this.stop().animate({ fill: 'silver' }, 300, "<>");
+            this.stop().animate({ fill: this.__fill }, 300, "<>");
+            status.hide();
         });
-        map[state] = group;
 
     })(k, map_data[k]);
 });
 </script>
 <style>
-#map { width: 800px; height:600px }
+#map { width: 640px; height:520px }
 </style>
-
 <div id="map"></div>
