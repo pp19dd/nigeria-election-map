@@ -58,7 +58,10 @@ iframe { width: 100%; border: 0; height: 20px; }
 table { width: 100% }
 </style>
 
-<p><div class="number">1</div> <a href="1_kml_to_states.php">Regenerate Files from KML</a></p>
+<p>
+    <div style="float:left"><div class="number">1</div> <a href="1_kml_to_states.php">Regenerate Files from KML</a></div>
+    <div class="number">1b</div> <a href="1b_cities.php">Generate cities as KML</a>
+</p>
 <p><div class="number">4</div> <a href="4_grand_range.php">Compute grand Range from *.range</a></p>
 <p><div class="number">8</div> <a href="8_generate_combined_svg.php">Generate combined SVG file</a></p>
 <p><div class="number">9</div> <a href="9_view_svg.php">View SVG as RaphaelJS</a></p>

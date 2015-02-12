@@ -2,13 +2,7 @@
 require( "proj4php-master/src/proj4php/proj4php.php" );
 require( "class.kml.php" );
 require( "class.xy.php" );
-?>
 
-<style>
-body, html { margin:0; padding:0 }
-</style>
-
-<?php
 $data = unserialize(file_get_contents($_GET['file']));
 
 

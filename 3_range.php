@@ -2,13 +2,7 @@
 #require( "proj4php-master/src/proj4php/proj4php.php" );
 #require( "class.kml.php" );
 require( "class.xy.php" );
-?>
 
-<style>
-body, html { margin:0; padding:0 }
-</style>
-
-<?php
 
 $file = $_GET['file'] . ".geo";
 if( !file_exists($file) ) die( "error: {$file} is missing");

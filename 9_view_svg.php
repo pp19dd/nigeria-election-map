@@ -33,90 +33,112 @@ $svg = $svg_file->info();
 var map_data = <?php echo json_encode($svg); ?>;
 var paper;
 var map = { };
-
+var TRANSLATE = { x: 0, y: -155 };
 var styles = {
     poly: { fill: 'gray', 'stroke-width': 0.5, stroke: 'silver' },
-    over: { fill: 'black' },
-    status: { "font-size": 14, "text-anchor": "start" }
+    water_body: { fill: 'silver', 'stroke-width': 0.5, stroke: 'silver' },
+    over: { opacity: 0.5, stroke: 'gray' },
+    out: { opacity: 1, stroke: 'silver' },
+    status: { "font-size": 14, "text-anchor": "start" },
+    city: {
+        dot: { stroke: "orange" },
+        label: { "text-anchor": "start" }
+    }
 }
 
 var range = <?php
     echo json_encode(unserialize(file_get_contents("states/_grand_range.txt")));
 ?>;
 
-var cities = [
-    { name: "Lagos", lat: 6.524379, lng: 3.379206 },
-    { name: "Kano", lat: 12.0, lng: 8.516667 },
-    { name: "Abuja", lat: 9.066667, lng: 7.483333 }
-];
+<?php
+define( "BORROWING_DATA", true );
+include( "1b_cities.php" );
+?>
 
-function geocode(input_point) {
-
-    var temp = proj4("WGS84", "GOOGLE", input_point );
-    input_point.x = parseFloat(temp.y);
-    input_point.y = parseFloat(temp.x);
-
-    // range falls within
-
-    // zero
-    input_point.x = input_point.x - range.x.min;
-    input_point.y = input_point.y - range.y.min;
-
-    // scale
-    var width = 640;
-    var height = 520;
-    var ratio = range.x.max / range.y.max;
-    var sx = width / range.x.max;
-    var sy = height / range.y.max;
-    input_point.x = input_point.x * sx;
-    input_point.y = input_point.y * sy;
-
-    // inversion correction
-    input_point.y = height - input_point.y;
-    // input_point.y += 100;
-    return( input_point );
-}
+var cities = <?php echo json_encode($city_data); ?>;
 
 function draw_cities() {
     $.each( cities, function(k, city) {
-        var pt = geocode({ x: city.lat, y: city.lng });
-        pt.y -= 155 +80;
-        paper.circle( pt.x, pt.y, 10 );
-        paper.text( pt.x, pt.y, city.name );
-        console.info( city );
-        console.info( pt );
-        console.info( "-------------------------------" );
+
+        if( city.name != "Lagos") return(false);
+        // var pt = geocode({ x: city.lat, y: city.lng });
+        // pt.y -= 155 +80;
+        /// city.y = 370 - city.y;
+
+        // city.x += TRANSLATE.x;
+        // city.y += TRANSLATE.y;
+
+        paper.circle( city.x, city.y, 10 ).translate(TRANSLATE.x, TRANSLATE.y);
+        paper
+            .text( city.x, city.y, city.name )
+            .translate(TRANSLATE.x + 15, TRANSLATE.y)
+            .attr(styles.city.label);
     });
+}
+
+// two passes: first cosmetic, second event triggering
+function draw_states(options, map_data, status) {
+    for( var k in map_data )(function(state, path_string) {
+
+        /*if( options.trigger == false && state == "abia" ) {
+            console.info( state );
+            //return( false );
+        }
+        if( state == "g11" ) state = "abia";
+        */
+        if( state == "g6" ) return(false);  // city geocode simulation
+
+        if( state == "water_body" ) {
+            map[state] = paper.path(path_string);
+            map[state].attr(styles.water_body);
+            map[state].translate(TRANSLATE.x, TRANSLATE.y);
+
+            return(false);
+        }
+
+        // if( state == "g11" ) return(false);
+        // if( state == "water_body" ) return(false);
+
+        if( options.trigger == false ) {
+
+            map[state] = paper.path(path_string);
+            map[state].attr(styles.poly);
+            map[state].translate(TRANSLATE.x, TRANSLATE.y);
+            map[state].__fill = map[state].attr("fill");
+
+            $("#counts").append( "<li>" + state + "</li>" );
+
+        } else {
+
+            map[state].__trigger = paper.path(path_string);
+            map[state].__trigger.translate(TRANSLATE.x, TRANSLATE.y);
+            map[state].__trigger.attr( { fill: "white", "stroke-width": 0, opacity: 0 } );
+
+            map[state].__trigger.mouseover(function() {
+                map[state].stop().animate(styles.over, 300, "<>");
+                status.attr("text", state);
+                status.show();
+            }).mouseout(function() {
+                // map[state].stop().animate({ fill: map[state].__fill }, 300, "<>");
+                map[state].stop().animate(styles.out, 300, "<>");
+                status.hide();
+            });
+
+        }
+
+    })(k, map_data[k]);
 }
 
 Raphael(function() {
     paper = Raphael("map", 525, 370);
     var status = paper.text(10,10,"status");
     status.attr( styles.status );
+    status.hide();
 
-    for( var k in map_data )(function(state, path_string) {
-
-        // if( state == "g11" ) return(false);
-        // if( state == "water_body" ) return(false);
-
-        map[state] = paper.path(path_string);
-        map[state].attr(styles.poly);
-        map[state].translate(0, -155);
-        map[state].__fill = map[state].attr("fill");
-
-        map[state].mouseover(function() {
-            this.stop().animate(styles.over, 300, "<>");
-            status.attr("text", state);
-            status.show();
-        }).mouseout(function() {
-            this.stop().animate({ fill: this.__fill }, 300, "<>");
-            status.hide();
-        });
-
-        $("#counts").append( "<li>" + state + "</li>" );
-    })(k, map_data[k]);
-
+    draw_states({ trigger: false }, map_data, status);
     draw_cities();
+    draw_states({ trigger: true }, map_data, status);
+
 });
 </script>
 <style>

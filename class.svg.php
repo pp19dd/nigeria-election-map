@@ -57,7 +57,8 @@ class SVG {
     function info() {
         $r = array();
 
-        $states = $this->xpath->query( "svg:g/svg:g" );
+        // FIXME: maybe addition of |svg:g broke things. :/
+        $states = $this->xpath->query( "svg:g/svg:g|svg:g" );
 
         foreach( $states as $state ) {
 

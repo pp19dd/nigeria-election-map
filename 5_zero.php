@@ -5,13 +5,7 @@
 #echo "<PRE>";
 
 require( "class.xy.php" );
-?>
 
-<style>
-body, html { margin:0; padding:0 }
-</style>
-
-<?php
 
 $range_file = "states/_grand_range.txt";
 if( !file_exists($range_file) ) die( "error: {$range_file} is missing");
