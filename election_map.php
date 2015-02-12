@@ -21,7 +21,7 @@ var styles = {
         stroke: 'black'
     },
     water_body: { fill: 'silver', 'stroke-width': 0.5, stroke: 'silver' },
-    over: { opacity: 0.5, stroke: 'white' },
+    over: { stroke: 'black', fill: "black" },
     out: { opacity: 1, stroke: 'black' },
     status: { "font-size": 14, "text-anchor": "start" },
     city: {
@@ -141,8 +141,8 @@ function over(e) {
 }
 
 function out(e) {
-    // map[state].stop().animate({ fill: map[state].__fill }, 300, "<>");
-    e.stop().animate(styles.out, 300, "<>");
+    e.stop().animate({ fill: e.__fill }, 300, "<>");
+    //e.stop().animate(styles.out, 300, "<>");
     //status.hide();
     tooltip( "", 0, 0 );
 }
@@ -159,7 +159,11 @@ function setVotes(poly, state, maj) {
     // setting bauchi to CPC 81.6852308001893
 
     //poly.hide();
-    poly.attr({ fill: "#" + rainbows[maj.maj].colourAt(maj.percentage) });
+
+    var computed_color = "#" + rainbows[maj.maj].colourAt(maj.percentage);
+    poly.attr({ fill: computed_color });
+
+    map[state].__fill = computed_color;
 
     map[state].__maj = maj;
 }
