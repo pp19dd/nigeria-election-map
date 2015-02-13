@@ -4,15 +4,25 @@ require( "class.svg.php" );
 $svg_file = new SVG("election_map.svg");
 $svg = $svg_file->info();
 ?>
+<!doctype html>
+<html>
+<head>
+    <title>Nigerian Election Map</title>
+
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="raphael-min.js"></script>
 <script type="text/javascript" src="rainbowvis.js"></script>
 <script type="text/javascript" src="tabletop.js"></script>
 
 <script type="text/javascript">
+var map_class = -1;
 var map_data = <?php echo json_encode($svg); ?>;
 var paper;
+
+// resident objects
 var map = { };
+var map_city = { };
+
 var TRANSLATE = { x: 0, y: -155 };
 var styles = {
     poly: {
@@ -42,6 +52,7 @@ var range = <?php
 define( "BORROWING_DATA", true );
 include( "1b_cities.php" );
 ?>
+
 
 var cities = <?php echo json_encode($city_data); ?>;
 
@@ -88,13 +99,8 @@ function tooltip(state, x, y) {
 
 
     $("#tooltip_status").html(html);
-
-    x = 300; y = 290;
-    $("#tooltip_status").css( {
-        "margin-left": x + "px",
-        "margin-top": y + "px"
-    })
 }
+
 
 // lagos only, 2015-02-12
 function draw_cities() {
@@ -116,7 +122,7 @@ function draw_cities() {
 
         s.push( paper
             .text( city.x, city.y, city.name )
-            .translate(TRANSLATE.x, TRANSLATE.y + 15)
+            .translate(TRANSLATE.x, TRANSLATE.y + 25)
             .attr(styles.city.label)
         );
 
@@ -128,6 +134,8 @@ function draw_cities() {
         }).mouseout( function() {
             out(map.lagos);
         });
+
+        map_city.lagos = s;
 
     });
 }
@@ -144,7 +152,9 @@ function out(e) {
     e.stop().animate({ fill: e.__fill }, 300, "<>");
     //e.stop().animate(styles.out, 300, "<>");
     //status.hide();
-    tooltip( "", 0, 0 );
+
+    //FIXME: remove this comment
+    ////////////tooltip( "", 0, 0 );
 }
 
 
@@ -166,6 +176,15 @@ function setVotes(poly, state, maj) {
     map[state].__fill = computed_color;
 
     map[state].__maj = maj;
+
+    /*    $("#vote_data tbody").append(
+        "<tr>" +
+            "<td>" + state + "</td>" +
+            "<td>" + maj.maj + "</td>" +
+            "<td>" + maj.percentage + "</td>" +
+        "</tr>"
+    );
+    */
 }
 
 // two passes: first cosmetic, second event triggering
@@ -285,6 +304,114 @@ function data_loaded(data) {
     })(data[state]["State Symbol"], data[state]);
 }
 
+function make_table() {
+    var totals = { };
+
+    for( var state in map )(function(key, data) {
+        for( var k in data )(function(party, votes) {
+            if( party.length > 5 ) return(false);
+            if( typeof totals[party] == "undefined" ) totals[party] = 0;
+
+            totals[party] += votes;
+        })(k, parseInt(data[k]));
+    })(state, map[state].__data);
+
+    for( var k in totals )(function(party, votes) {
+        $("#vote_data tbody").append(
+            "<tr>" +
+            "<td>" + party + "</td>" +
+            "<td>" + votes + "</td>" +
+            "</tr>"
+        )
+    })(k, totals[k]);
+
+}
+
+function iterate(p) {
+    for( var k in map )(function(poly) {
+        poly.attr(p);
+    })(map[k]);
+}
+
+function check_map_class(w) {
+
+    var new_map_class = map_class;
+
+    // adjust stroke if needed
+    if( w <= 350 ) new_map_class = 0;
+    if( w > 350 ) new_map_class = 1;
+    if( w > 500 ) new_map_class = 2;
+    if( w > 800 ) new_map_class = 3;
+
+    // if pixels < 440, shift tooltip below map
+    if( w < 440 ) {
+        $("#tooltip_status_container").addClass("too-short");
+    } else {
+        $("#tooltip_status_container").removeClass("too-short");
+    }
+
+    if( new_map_class == map_class ) return( false );
+
+    map_class = new_map_class;
+
+    switch( map_class ) {
+        case 0:
+            iterate( { "stroke-width": 0.2, "stroke": "black" });
+            map_city.lagos[2].attr( { "text-anchor": "start", "font-size": 32 });
+        break;
+        case 1:
+            iterate( { "stroke-width": 0.5, "stroke": "black" });
+            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 20 });
+        break;
+        case 2:
+            iterate( { "stroke-width": 1, "stroke": "rgb(70,70,70)" });
+            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 14 });
+        break;
+        case 3:
+            iterate( { "stroke-width": 2, "stroke": "rgb(70,70,70)" });
+            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 14 });
+        break;
+    }
+
+    //console.log( "map class = " + map_class );
+}
+
+
+function resize_map() {
+    var w = $(window).width();
+    var h = $(window).height(); false
+    // h  is proportioned 525 / 370
+
+    // assume map isn't clipped by viewport
+    var nw = w;
+    var nh = (370*w)/525;
+
+    // and if it is, recompute w for h
+    if( nh > h) {
+        nh = h;
+        w = (525 * nh) / 370;
+    }
+
+    check_map_class(w);
+
+    $("#map").css({ width: nw, height: nh });
+    paper.setSize(nw, nh);
+    paper.setViewBox(0, 0, 535, 370);
+
+
+    // resize tooltip
+    var x = $("#map").width() - 220;
+    var y = $("#map").height() - 80;
+
+    $("#tooltip_status").css( {
+        "margin-left": x + "px",
+        //"margin-top": -y + "px"
+        "margin-top": "-80px"
+    })
+
+
+}
+
 Raphael(function() {
     paper = Raphael("map", 525, 370);
 
@@ -296,28 +423,60 @@ Raphael(function() {
     draw_states({ trigger: true });
 
     load_data();
+    make_table();
 
     // status.toFront();
+
+    $(window).resize(function(e) {
+        resize_map();
+    });
+
+    resize_map();
+    check_map_class();
+
 });
 </script>
-<style>
-body, html { background-color: silver }
+
+<style type="text/css">
+body, html { background-color: silver; margin:0; padding:0; overflow: hidden; height:100%; margin:auto !important }
 #map { background-color: white; width: 525px; height:370px; }
 #counts li { width: 150px; float: left; }
+
 #tooltip_status_container { width:0px; height:0px; position: absolute; z-index:100 }
+.too-short #tooltip_status { background-color: red; }
+.too-short { display: inherit !important }
+#tooltip_status, #tooltip_status p { line-height: 1.25em; }
 #tooltip_status {
     width: 220px;
+    height:80px;
     font-family: Arial;
     font-size: 12px;
     padding-left: 50px;
 }
-#tooltip_status, #tooltip_status p { line-height: 1.25em; }
+
+#table_data { }
+#vote_data tbody { height: 50px; overflow: auto !important }
 </style>
+</head>
+
+<body>
+
+<div id="map"></div>
 
 <div id="tooltip_status_container">
     <div id="tooltip_status"></div>
 </div>
 
-<div id="map"></div>
+<div id="table_data">
+    <table id="vote_data">
+        <thead>
+            <th>Leading Party</th>
+            <th>Votes</th>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
 
-<ul id="counts"></ul>
+</body>
+</html>
