@@ -67,7 +67,7 @@ function addRainbows(row) {
 
             if( k == "PDP" ) randy = 15; // 2011: south
             if( k == "CPC" ) randy = 11; // 2011: north
-            if( k == "ACN" ) randy = 9; // 2011: exception
+            if( k == "ACN" ) randy = 37; // 2011: exception 42 ok
 
             rainbows[k] = new Rainbow();
             rainbows[k].setNumberRange(0, 100);
@@ -92,8 +92,6 @@ function tooltip(state, x, y) {
         html += "<p>Majority: " + maj.maj + " party</p>";
         html += "by " + Math.round(maj.percentage * 10) / 10 + " % of the votes";
     } catch( err ) {
-        //console.info( err );
-        //console.info( state );
     }
 
 
@@ -102,30 +100,27 @@ function tooltip(state, x, y) {
 }
 
 
-// lagos only, 2015-02-12
-function draw_cities() {
-    $.each( cities, function(k, city) {
+function draw_city(city) {
+    var s = paper.set();
 
-        if( city.name != "Lagos") return(false);
-        var s = paper.set();
+    s.push( paper
+        .circle( city.x, city.y, 5 )
+        .translate(TRANSLATE.x, TRANSLATE.y)
+        .attr( styles.city.dot )
+    );
 
-        s.push( paper
-            .circle( city.x, city.y, 5 )
-            .translate(TRANSLATE.x, TRANSLATE.y)
-            .attr( styles.city.dot )
-        );
+    s.push( paper
+        .circle( city.x, city.y, 8 )
+        .translate(TRANSLATE.x, TRANSLATE.y)
+    );
 
-        s.push( paper
-            .circle( city.x, city.y, 8 )
-            .translate(TRANSLATE.x, TRANSLATE.y)
-        );
+    s.push( paper
+        .text( city.x, city.y, city.name )
+        .translate(TRANSLATE.x, TRANSLATE.y + 25)
+        .attr(styles.city.label)
+    );
 
-        s.push( paper
-            .text( city.x, city.y, city.name )
-            .translate(TRANSLATE.x, TRANSLATE.y + 25)
-            .attr(styles.city.label)
-        );
-
+    if( city.name == "Lagos" ) {
         var b = s.getBBox();
         var l = paper.rect( b.x, b.y, b.width, b.height ).attr(styles.trigger);
 
@@ -134,8 +129,23 @@ function draw_cities() {
         }).mouseout( function() {
             out(map.lagos);
         });
+    }
 
-        map_city.lagos = s;
+    map_city[city.name] = s;
+}
+
+// lagos only, 2015-02-12
+function draw_cities() {
+    $.each( cities, function(k, city) {
+
+        if(
+            city.name == "Lagos" ||
+            city.name == "Abuja" ||
+            city.name == "Port Harcourt" ||
+            city.name == "Maiduguri"
+        ) {
+            draw_city(city);
+        }
 
     });
 }
@@ -153,8 +163,7 @@ function out(e) {
     //e.stop().animate(styles.out, 300, "<>");
     //status.hide();
 
-    //FIXME: remove this comment
-    ////////////tooltip( "", 0, 0 );
+    tooltip( "", 0, 0 );
 }
 
 
@@ -165,7 +174,6 @@ percentage: 64.67520506131346
 total: 414754
 */
 function setVotes(poly, state, maj) {
-    // console.info( "setting " + state + " to " + maj.maj + " " + maj.percentage );
     // setting bauchi to CPC 81.6852308001893
 
     //poly.hide();
@@ -192,7 +200,6 @@ function draw_states(options) {
     for( var k in map_data )(function(state, path_string) {
 
         /*if( options.trigger == false && state == "abia" ) {
-            console.info( state );
             //return( false );
         }
         if( state == "g11" ) state = "abia";
@@ -246,9 +253,6 @@ function load_data() {
     Tabletop.init({
         key: '14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI',
         callback: function(data, tabletop) {
-            // console.log(data)
-            console.info( data );
-            //console.info( JSON.stringify(data) );
 
 
         },
@@ -333,6 +337,12 @@ function iterate(p) {
     })(map[k]);
 }
 
+function map_city_style(a) {
+    $.each(map_city, function(k, v) {
+        v[2].attr(a);
+    });
+}
+
 function check_map_class(w) {
 
     var new_map_class = map_class;
@@ -357,23 +367,22 @@ function check_map_class(w) {
     switch( map_class ) {
         case 0:
             iterate( { "stroke-width": 0.2, "stroke": "black" });
-            map_city.lagos[2].attr( { "text-anchor": "start", "font-size": 32 });
+            map_city_style( { "text-anchor": "start", "font-size": 32 });
         break;
         case 1:
             iterate( { "stroke-width": 0.5, "stroke": "black" });
-            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 20 });
+            map_city_style( { "text-anchor": "middle", "font-size": 20 });
         break;
         case 2:
             iterate( { "stroke-width": 1, "stroke": "rgb(70,70,70)" });
-            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 14 });
+            map_city_style( { "text-anchor": "middle", "font-size": 14 });
         break;
         case 3:
             iterate( { "stroke-width": 2, "stroke": "rgb(70,70,70)" });
-            map_city.lagos[2].attr( { "text-anchor": "middle", "font-size": 14 });
+            map_city_style( { "text-anchor": "middle", "font-size": 14 });
         break;
     }
 
-    //console.log( "map class = " + map_class );
 }
 
 
@@ -423,7 +432,7 @@ Raphael(function() {
     draw_states({ trigger: true });
 
     load_data();
-    make_table();
+    /////////make_table();
 
     // status.toFront();
 
@@ -438,12 +447,12 @@ Raphael(function() {
 </script>
 
 <style type="text/css">
-body, html { background-color: silver; margin:0; padding:0; overflow: hidden; height:100%; margin:auto !important }
+body, html { background-color: white; margin:0; padding:0; overflow: hidden; height:100%; margin:auto !important }
 #map { background-color: white; width: 525px; height:370px; }
 #counts li { width: 150px; float: left; }
 
 #tooltip_status_container { width:0px; height:0px; position: absolute; z-index:100 }
-.too-short #tooltip_status { background-color: red; }
+.too-short #tooltip_status { /*background-color: red;*/ }
 .too-short { display: inherit !important }
 #tooltip_status, #tooltip_status p { line-height: 1.25em; }
 #tooltip_status {
@@ -454,7 +463,7 @@ body, html { background-color: silver; margin:0; padding:0; overflow: hidden; he
     padding-left: 50px;
 }
 
-#table_data { }
+#table_data { display: none }
 #vote_data tbody { height: 50px; overflow: auto !important }
 </style>
 </head>
@@ -470,8 +479,10 @@ body, html { background-color: silver; margin:0; padding:0; overflow: hidden; he
 <div id="table_data">
     <table id="vote_data">
         <thead>
-            <th>Leading Party</th>
-            <th>Votes</th>
+            <tr>
+                <th>Leading Party</th>
+                <th>Votes</th>
+            </tr>
         </thead>
         <tbody>
         </tbody>
