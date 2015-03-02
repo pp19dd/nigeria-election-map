@@ -8,7 +8,7 @@ $city_data = array(
     array( "name" => "Abuja",         "lat" => 9.066667,  "lng" => 7.483333 ), # *
     array( "name" => "Ibbadan",       "lat" => 7.396389,  "lng" => 3.916667 ),
     array( "name" => "Kaduna",        "lat" => 10.516667, "lng" => 7.433333 ),
-    array( "name" => "Port Harcourt", "lat" => 4.790000,  "lng" => 6.993333 ),
+    array( "name" => "Port Harcourt", "lat" => 4.790000,  "lng" => 6.993333 ), # *
     array( "name" => "Aba",           "lat" => 5.116667,  "lng" => 7.366667 ),
     array( "name" => "Ogbomosho",     "lat" => 8.133333,  "lng" => 4.25 ),
     array( "name" => "Maiduguri",     "lat" => 11.833333, "lng" => 13.15 ), # *

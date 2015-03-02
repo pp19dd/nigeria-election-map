@@ -12,7 +12,7 @@ $svg = $svg_file->info();
 <script type="text/javascript" src="jquery.min.js"></script>
 <script type="text/javascript" src="raphael-min.js"></script>
 <script type="text/javascript" src="rainbowvis.js"></script>
-<script type="text/javascript" src="tabletop.js"></script>
+<!--<script type="text/javascript" src="tabletop.js"></script>-->
 
 <script type="text/javascript">
 var map_class = -1;
@@ -248,21 +248,28 @@ function draw_states(options) {
     })(k, map_data[k]);
 }
 
+function load_data() {
+
+    //Tabletop.init({
+    //    key: '14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI',
+        //proxy: "http://projects.voanews.com/data/cache",
+    //    proxy: "http://projects.voanews.com/data/?key=",
+        //parameterize: "http://projects.voanews.com/data/cache",
+        //xsingleton: false,
+    //    callback: function(data, tabletop) {
+            data_loaded(data);
+    //        console.info( "data is");
+    //        console.info(data);
+    //    },
+    //    simpleSheet: true
+    //});
+}
+
 /*
 function load_data() {
-    Tabletop.init({
-        key: '14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI',
-        callback: function(data, tabletop) {
-
-
-        },
-        simpleSheet: true
-    });
-}*/
-
-function load_data() {
-    data_loaded(<?php echo file_get_contents("2011.json"); ?>);
+    data_loaded(<?php echo file_get_contents("2011b.json"); ?>);
 }
+*/
 
 function determine_maj(state) {
     var max = 0;
@@ -288,8 +295,10 @@ function determine_maj(state) {
         percentage: (max / total) * 100
     });
 }
-
+var dino;
 function data_loaded(data) {
+    dino = data;
+    console.info( dino );
     addRainbows(data[0]);
 
     for( var state in data )(function(key, state) {
