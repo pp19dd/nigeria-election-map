@@ -1,18 +1,30 @@
 <?php
-require( "class.svg.php" );
+require( "../class.svg.php" );
 
-$svg_file = new SVG("election_map.svg");
+$svg_file = new SVG("../election_map.svg");
 $svg = $svg_file->info();
+
+$lang = "en";
+if( isset( $_GET['lang']) ) $lang = $_GET['lang'];
+
+$year = 2015;
+if( isset( $_GET['year']) ) $year = intval($_GET['year']);
+
+switch( $year ) {
+    case 2011: $key = "14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI"; break;
+    default: $key = "1OkwSPJ-XOiBRvJ1oJGs8dLW0tBKRucUO4eRG43uoD5k"; break;
+
+}
+
 ?>
 <!doctype html>
 <html>
 <head>
     <title>Nigerian Election Map</title>
-
-<script type="text/javascript" src="jquery.min.js"></script>
-<script type="text/javascript" src="raphael-min.js"></script>
-<script type="text/javascript" src="rainbowvis.js"></script>
-<!--<script type="text/javascript" src="tabletop.js"></script>-->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="raphael-min.js"></script>
+    <script type="text/javascript" src="rainbowvis.js"></script>
 
 <script type="text/javascript">
 var map_class = -1;
@@ -24,6 +36,23 @@ var map = { };
 var map_city = { };
 
 var TRANSLATE = { x: 0, y: -155 };
+var LANG = "<?php echo $lang ?>";
+var text = {
+    en: {
+        state_name_key: "State Name",
+        state: "state",
+        majority: "majority",
+        party: "party",
+        votes: "% of Votes"
+    },
+    ha: {
+        state_name_key: "State Name HA",
+        state: "Jiha",
+        majority: "Rinjaye",
+        party: "Jamiyya",
+        votes: "% kuri’u"
+    }
+}
 var styles = {
     poly: {
         fill: 'gray',
@@ -41,18 +70,20 @@ var styles = {
     trigger: { fill: "white", "stroke-width": 0, opacity: 0 }
 };
 
-<?php readfile( "colors.js") ?>
+<?php readfile( "../colors.js") ?>
 
 
 var range = <?php
-    echo json_encode(unserialize(file_get_contents("states/_grand_range.txt")));
+    echo json_encode(unserialize(file_get_contents("../states/_grand_range.txt")));
 ?>;
 
+// city data
 <?php
+chdir( ".." );
 define( "BORROWING_DATA", true );
 include( "1b_cities.php" );
+chdir( "map" );
 ?>
-
 
 var cities = <?php echo json_encode($city_data); ?>;
 
@@ -60,18 +91,30 @@ var cities = <?php echo json_encode($city_data); ?>;
 var rainbows = { };
 
 // run-once
+function addRainbow(k) {
+    rainbows[k] = new Rainbow();
+    rainbows[k].setNumberRange(0, 100);
+    var randy = parseInt(Math.random() * colourNames.length);
+
+    // empty data exception
+    if( k == "" ) {
+        randy = 0; // empty
+        rainbows[k].setSpectrum("#" + colourNames[randy].value, "#000000" );
+        return;
+    }
+
+    if( k == "PDP" ) randy = 15; // 2011: south
+    if( k == "CPC" ) randy = 11; // 2011: north
+    if( k == "ACN" ) randy = 37; // 2011: exception 42 ok
+
+    rainbows[k].setSpectrum("#ffffff", "#" + colourNames[randy].value );
+}
+
 function addRainbows(row) {
+    addRainbow("");
     for( var k in row ) {
         if( k.length <= 5 ) {
-            var randy = parseInt(Math.random() * colourNames.length);
-
-            if( k == "PDP" ) randy = 15; // 2011: south
-            if( k == "CPC" ) randy = 11; // 2011: north
-            if( k == "ACN" ) randy = 37; // 2011: exception 42 ok
-
-            rainbows[k] = new Rainbow();
-            rainbows[k].setNumberRange(0, 100);
-            rainbows[k].setSpectrum("#ffffff", "#" + colourNames[randy].value );
+            addRainbow(k);
         }
     }
 }
@@ -88,9 +131,13 @@ function tooltip(state, x, y) {
     try {
         var data = map[state].__data;
         var maj = map[state].__maj;
-        html += "<strong>" + data["State Name"] + " State</strong>";
-        html += "<p>Majority: " + maj.maj + " party</p>";
-        html += "by " + Math.round(maj.percentage * 10) / 10 + " % of the votes";
+        html += "<strong>" + data[text[LANG].state_name_key] + " " + text[LANG].state+ "</strong>";
+        if( maj.maj == "" ) {
+            html += "<p>&nbsp;</p>";
+        } else {
+            html += "<p>" + text[LANG].majority + ": " + maj.maj + " " + text[LANG].party + "</p>";
+        }
+        html += Math.round(maj.percentage * 10) / 10 + " " + text[LANG].votes;
     } catch( err ) {
     }
 
@@ -177,7 +224,6 @@ function setVotes(poly, state, maj) {
     // setting bauchi to CPC 81.6852308001893
 
     //poly.hide();
-
     var computed_color = "#" + rainbows[maj.maj].colourAt(maj.percentage);
     poly.attr({ fill: computed_color });
 
@@ -249,31 +295,19 @@ function draw_states(options) {
 }
 
 function load_data() {
-
-    //Tabletop.init({
-    //    key: '14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI',
-        //proxy: "http://projects.voanews.com/data/cache",
-    //    proxy: "http://projects.voanews.com/data/?key=",
-        //parameterize: "http://projects.voanews.com/data/cache",
-        //xsingleton: false,
-    //    callback: function(data, tabletop) {
+    var key = "<?php echo $key ?>";
+    $.ajax({
+        dataType: "json",
+        url: "http://projects.voanews.com/data/?key=" + key + "&callback=?",
+        success: function(data) {
             data_loaded(data);
-    //        console.info( "data is");
-    //        console.info(data);
-    //    },
-    //    simpleSheet: true
-    //});
+        }
+    })
 }
-
-/*
-function load_data() {
-    data_loaded(<?php echo file_get_contents("2011b.json"); ?>);
-}
-*/
 
 function determine_maj(state) {
     var max = 0;
-    var maj;
+    var maj = "";
     var total = 0;
 
     for( var k in state )(function(state, votes) {
@@ -288,17 +322,24 @@ function determine_maj(state) {
         }
     })(k, parseInt(state[k]));
 
+    if( isNaN(max) ) max = 0;
+    if( isNaN(total) ) total = 0;
+
+    if( max != 0 && total != 0 ) {
+        var percentage = (max / total) * 100;
+    } else {
+        var percentage = 0.0;
+    }
+
     return({
         max: max,
         maj: maj,
         total: total,
-        percentage: (max / total) * 100
+        percentage: percentage
     });
 }
-var dino;
+
 function data_loaded(data) {
-    dino = data;
-    console.info( dino );
     addRainbows(data[0]);
 
     for( var state in data )(function(key, state) {
