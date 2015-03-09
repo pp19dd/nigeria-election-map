@@ -11,9 +11,29 @@ $year = 2015;
 if( isset( $_GET['year']) ) $year = intval($_GET['year']);
 
 switch( $year ) {
-    case 2011: $key = "14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI"; break;
-    default: $key = "1OkwSPJ-XOiBRvJ1oJGs8dLW0tBKRucUO4eRG43uoD5k"; break;
+    case 2011:
+        $key = "14UU6pYCxSmZ2Z_cS7Ch8c7KSmueptSnGHoHcmcRZlJI";
+        $party_a = array(
+            "symbol" => "PDP",
+            "candidate" => "Goodluck Jonathan"
+        );
+        $party_b = array(
+            "symbol" => "CPC",
+            "candidate" => "Muhammadu Buhari"
+        );
+        break;
 
+    default:
+        $key = "1OkwSPJ-XOiBRvJ1oJGs8dLW0tBKRucUO4eRG43uoD5k";
+        $party_a = array(
+            "symbol" => "PDP",
+            "candidate" => "Goodluck Jonathan"
+        );
+        $party_b = array(
+            "symbol" => "APC",
+            "candidate" => "Muhammadu Buhari"
+        );
+        break;
 }
 
 ?>
@@ -90,6 +110,23 @@ var cities = <?php echo json_encode($city_data); ?>;
 // generate voting palette dynamically, using a single state row
 var rainbows = { };
 
+var legend = {
+    party_a: {
+        symbol: "<?php echo $party_a["symbol"] ?>",
+        state_count: 0
+    },
+    party_b: {
+        symbol: "<?php echo $party_b["symbol"] ?>",
+        state_count: 0
+    }
+}
+
+function compute_legend(state, maj) {
+    //console.info(state, maj);
+    if( maj.req.a >= 25.0 ) { legend.party_a.state_count++; }
+    if( maj.req.b >= 25.0 ) { legend.party_b.state_count++; }
+}
+
 // run-once
 function addRainbow(k) {
     rainbows[k] = new Rainbow();
@@ -119,6 +156,14 @@ function addRainbows(row) {
     }
 }
 
+
+function draw_legend() {
+    $("#party_" + legend.party_a.symbol).html( legend.party_a.state_count );
+    $("#party_" + legend.party_b.symbol).html( legend.party_b.state_count );
+    //console.info( "done") ;
+//  console.dir( legend );
+legend.par
+}
 
 // var hexColour = rainbow.colourAt(item.rows);
 
@@ -310,11 +355,15 @@ function determine_maj(state) {
     var maj = "";
     var total = 0;
 
+    var lookup = {};
+
     for( var k in state )(function(state, votes) {
         // skip "state symbol" columns
         if( k.length > 5 ) return(false);
 
         total += votes;
+
+        lookup[state] = votes;
 
         if( votes > max ) {
             max = votes;
@@ -331,7 +380,14 @@ function determine_maj(state) {
         var percentage = 0.0;
     }
 
+    // nigerian law requires a candidate to have at least
+    // 25% vote in 2/3 of the states
+
     return({
+        req: {
+            a: (lookup[legend.party_a.symbol] / total) * 100,
+            b: (lookup[legend.party_b.symbol] / total) * 100
+        },
         max: max,
         maj: maj,
         total: total,
@@ -345,6 +401,8 @@ function data_loaded(data) {
     for( var state in data )(function(key, state) {
         var maj = determine_maj(state);
 
+        compute_legend(state, maj);
+
         /* (maj return)...
             maj: "PDP"
             max: 268243
@@ -356,6 +414,8 @@ function data_loaded(data) {
         map[key].__data = state;
 
     })(data[state]["State Symbol"], data[state]);
+
+    draw_legend();
 }
 
 function make_table() {
@@ -438,7 +498,7 @@ function check_map_class(w) {
 
 function resize_map() {
     var w = $(window).width();
-    var h = $(window).height(); false
+    var h = $(window).height();
     // h  is proportioned 525 / 370
 
     // assume map isn't clipped by viewport
@@ -497,8 +557,11 @@ Raphael(function() {
 </script>
 
 <style type="text/css">
-body, html { background-color: white; margin:0; padding:0; overflow: hidden; height:100%; margin:auto !important }
+body, html { width:100%; background-color: white; margin:0; padding:0; overflow: hidden; height:100%; margin:auto !important }
 #map { background-color: white; width: 525px; height:370px; }
+#map_legend { background-color: white; height:90px; font-family: Arial; font-size: 12px }
+#map_legend td { vertical-align: top; text-align: center }
+
 #counts li { width: 150px; float: left; }
 
 #tooltip_status_container { width:0px; height:0px; position: absolute; z-index:100 }
@@ -520,6 +583,26 @@ body, html { background-color: white; margin:0; padding:0; overflow: hidden; hei
 
 <body>
 
+<div id="map_legend">
+    <table width="100%">
+        <tr>
+            <td style="width:50%">
+                <p><?php echo $party_a["candidate"] ?><br/>(<?php echo $party_a["symbol"] ?>)</p>
+            </td>
+            <td style="width:50%">
+                <p><?php echo $party_b["candidate"] ?><br/>(<?php echo $party_b["symbol"] ?>)</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:50%">
+                <div id="party_<?php echo $party_a["symbol"] ?>">&nbsp;</div>
+            </td>
+            <td style="width:50%">
+                <div id="party_<?php echo $party_b["symbol"] ?>">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+</div>
 <div id="map"></div>
 
 <div id="tooltip_status_container">
