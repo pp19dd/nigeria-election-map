@@ -2,7 +2,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Nigerian Election Map</title>
+    <title>Nigerian Election Map - <?php echo $year ?> - <?php echo $lang ?></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="raphael-min.js"></script>
